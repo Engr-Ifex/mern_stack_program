@@ -56,7 +56,7 @@ const allUsers = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const id = req.params.id
+    const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(400)
@@ -66,8 +66,6 @@ const updateUser = async (req, res) => {
       new: true
     })
 
-    updatedUser.save()
-
     res
       .status(202)
       .json({ success: true, message: 'Profile updated', updatedUser })
@@ -76,4 +74,15 @@ const updateUser = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, allUsers, updateUser }
+const deleteUser = async (req, res) => {
+   try {
+    const id = req.params.id
+    const deletedUser = await userModel.findByIdAndDelete(id, req.body)
+    res.status(200).json({success:true, message:'User Deeleted Successfully', deletedUser})
+   }
+   catch (err) {
+    console.log(err.message)
+  }
+}
+
+module.exports = { registerUser, allUsers, updateUser, deleteUser }
