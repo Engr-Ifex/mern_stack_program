@@ -66,6 +66,8 @@ const updateUser = async (req, res) => {
       new: true
     })
 
+    // id, {}
+
     res
       .status(202)
       .json({ success: true, message: 'Profile updated', updatedUser })
