@@ -1,5 +1,7 @@
 const userModel = require('../Models/userModels')
 const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 // http response codes
 // 100 -199 - Informational responses
@@ -16,10 +18,11 @@ const mongoose = require('mongoose')
 // 500 - internal server error
 
 // CRUD -> Create or POST/ Read or GET/ Update or PATCH or PUT/ Delete - DELETE
+const period = 1000 * 60 * 60 * 24 * 3
 
 const registerUser = async (req, res) => {
   try {
-    const { firstname, lastname, email, DOB, age } = req.body
+    const { firstname, lastname, email, DOB, age, password } = req.body
     // existing user
     const existingUser = await userModel.findOne({ email })
     if (existingUser) {
@@ -27,12 +30,14 @@ const registerUser = async (req, res) => {
         .status(402)
         .json({ success: false, message: 'Email already in use' })
     }
+    const hashedPassword = await bcrypt.hash(password, 10)
     const newUser = userModel({
       firstname,
       lastname,
       email,
       DOB,
-      age
+      age,
+      password: hashedPassword
     })
     const savedUser = await newUser.save()
     res
@@ -56,7 +61,7 @@ const allUsers = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res
         .status(400)
@@ -77,14 +82,49 @@ const updateUser = async (req, res) => {
 }
 
 const deleteUser = async (req, res) => {
-   try {
+  try {
     const id = req.params.id
     const deletedUser = await userModel.findByIdAndDelete(id, req.body)
-    res.status(200).json({success:true, message:'User Deeleted Successfully', deletedUser})
-   }
-   catch (err) {
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: 'User Deeleted Successfully',
+        deletedUser
+      })
+  } catch (err) {
     console.log(err.message)
   }
 }
 
-module.exports = { registerUser, allUsers, updateUser, deleteUser }
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body
+    const user = await userModel.findOne({ email })
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'User Not Found!' })
+    }
+    const isPassword = await bcrypt.compare(password, user.password)
+    if (!isPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Incorrect Password' })
+    }
+   jwt.sign({id: user._id}, process.env.SECERT, {expiresIn: "1d"}, async (err, token) => {
+    if(err){
+      throw err;
+    }
+    res.cookie('userId', user._id, {maxAge : period, httpOnly: true})
+    res.status(200).json({success: true, message: "User logged In Successfully", user, token})
+
+   })
+  } catch (err) {
+    console.log(err.message)
+  }
+}
+
+// id, serect
+
+module.exports = { registerUser, allUsers, updateUser, deleteUser, loginUser }

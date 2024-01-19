@@ -1,4 +1,5 @@
 const express = require('express')
+const cookieParser = require('cookie-parser')
 const dotenv = require('dotenv')
 const connectToDB  = require('./Database/db')
 dotenv.config()
@@ -10,6 +11,7 @@ const port = process.env.PORT
 // Middleware for parsing JSON request body
 app.use(express.json())
 app.use(express.urlencoded({extended : true}))
+app.use(cookieParser())
 app.use(userRouters)
 
 // Nodemon -> helps update all changes & reload the server
