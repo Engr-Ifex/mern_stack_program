@@ -9,7 +9,7 @@ const verifyUser = (req, res, next) => {
         .status(404)
         .json({ success: false, message: 'Token not found!' })
     }
-    jwt.verify(token, process.env.SECRECT, async (err, decodedToken) => {
+    jwt.verify(token, process.env.SECERT, async (err, decodedToken) => {
       if (err) {
         return res.status(401).json({ auth: false, message: 'Unauthorized' })
       }
